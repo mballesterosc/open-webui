@@ -462,6 +462,21 @@
 		});
 	};
 
+    function outsideClick(node, callback) {
+        const handleClick = (event) => {
+        if (node && !node.contains(event.target)) {
+            callback();
+        }
+        };
+
+        document.addEventListener('click', handleClick, true);
+        return {
+        destroy() {
+            document.removeEventListener('click', handleClick, true);
+        }
+        };
+    }
+
 	const screenCaptureHandler = async () => {
 		try {
 			// Request screen media
@@ -1631,6 +1646,83 @@
 											</div>
 										</InputMenu>
 
+                                        
+                                                {#if toggleFilters && toggleFilters.length > 0}
+                                                    <div class="relative self-center">
+                                                    <Tooltip content={$i18n.t('Functions')} placement="top">
+                                                        <button
+                                                        on:click|preventDefault={() => {
+                                                            const dropdown = document.getElementById('filters-dropdown');
+                                                            if (dropdown) {
+                                                            dropdown.classList.toggle('hidden');
+                                                            }
+                                                            // Opcional: Cerrar ToolsModal si está abierto
+                                                            showTools = false;
+                                                        }}
+                                                        type="button"
+                                                        class="bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800 transition rounded-full p-1.5 flex items-center gap-1"
+                                                        aria-label="Functions"
+                                                        >
+                                                        <Sparkles className="size-4" strokeWidth="1.75" />
+                                                        {#if selectedFilterIds.length > 0}
+                                                            <span class="text-xs bg-sky-100 text-sky-800 dark:bg-sky-200/5 dark:text-sky-300 rounded-full px-1.5">
+                                                            {selectedFilterIds.length}
+                                                            </span>
+                                                        {/if}
+                                                        </button>
+                                                    </Tooltip>
+
+                                                   
+                                                    <div
+                                                        use:outsideClick={() => {
+                                                        const dropdown = document.getElementById('filters-dropdown');
+                                                        if (dropdown && !dropdown.classList.contains('hidden')) {
+                                                            dropdown.classList.add('hidden');
+                                                        }
+                                                        }}
+                                                        id="filters-dropdown"
+                                                        class="absolute bottom-full left-0 z-50 hidden max-h-40 overflow-y-auto overflow-x-hidden w-56 flex flex-col gap-1 rounded-lg border border-gray-200 bg-white p-1.5 shadow-lg dark:border-gray-700 dark:bg-gray-900"
+                                                    >
+                                                        {#each toggleFilters as filter (filter.id)}
+                                                        <Tooltip content={filter?.description} placement="right"> 
+                                                            <div class="w-full">
+                                                            <button
+                                                            on:click|preventDefault={() => {
+                                                                const active = selectedFilterIds.includes(filter.id);
+                                                                if (active) {
+                                                                    selectedFilterIds = selectedFilterIds.filter((id) => id !== filter.id);
+                                                                } else {
+                                                                    selectedFilterIds = [...selectedFilterIds, filter.id];
+                                                                }
+                                                            }}
+                                                            class="px-2 @xl:px-2.5 py-2 flex gap-1.5 items-center text-sm rounded-full transition-colors duration-300 focus:outline-hidden max-w-full overflow-hidden hover:bg-gray-50 dark:hover:bg-gray-800 {selectedFilterIds.includes(
+																filter.id
+															)
+																? 'text-sky-500 dark:text-sky-300 bg-sky-50 dark:bg-sky-200/5'
+																: 'bg-transparent text-gray-600 dark:text-gray-300  '} capitalize"
+                                                        >
+                                                            {#if filter?.icon}
+                                                                <div class="size-4 flex items-center justify-center shrink-0"> 
+                                                                    <img
+                                                                        src={filter.icon}
+                                                                        class="size-3.5 {filter.icon.includes('svg') ? 'dark:invert-[80%]' : ''}"
+                                                                        style="fill: currentColor;"
+                                                                        alt={filter.name}
+                                                                    />
+                                                                </div>
+                                                            {:else}
+                                                                <Sparkles className="size-4 shrink-0" strokeWidth="1.75" /> 
+                                                            {/if}
+                                                            <span class="capitalize flex-1 whitespace-nowrap overflow-hidden text-ellipsis">{filter.name}</span> 
+                                                           
+                                                        </button>
+                                                            </div>
+                                                        </Tooltip>
+                                                        {/each}
+                                                    </div>
+                                                    </div>
+                                                {/if}
+
 										{#if $_user && (showToolsButton || (toggleFilters && toggleFilters.length > 0) || showWebSearchButton || showImageGenerationButton || showCodeInterpreterButton)}
 											<div
 												class="flex self-center w-[1px] h-4 mx-1.5 bg-gray-50 dark:bg-gray-800"
@@ -1660,46 +1752,7 @@
 													</Tooltip>
 												{/if}
 
-												{#each toggleFilters as filter, filterIdx (filter.id)}
-													<Tooltip content={filter?.description} placement="top">
-														<button
-															on:click|preventDefault={() => {
-																if (selectedFilterIds.includes(filter.id)) {
-																	selectedFilterIds = selectedFilterIds.filter(
-																		(id) => id !== filter.id
-																	);
-																} else {
-																	selectedFilterIds = [...selectedFilterIds, filter.id];
-																}
-															}}
-															type="button"
-															class="px-2 @xl:px-2.5 py-2 flex gap-1.5 items-center text-sm rounded-full transition-colors duration-300 focus:outline-hidden max-w-full overflow-hidden hover:bg-gray-50 dark:hover:bg-gray-800 {selectedFilterIds.includes(
-																filter.id
-															)
-																? 'text-sky-500 dark:text-sky-300 bg-sky-50 dark:bg-sky-200/5'
-																: 'bg-transparent text-gray-600 dark:text-gray-300  '} capitalize"
-														>
-															{#if filter?.icon}
-																<div class="size-4 items-center flex justify-center">
-																	<img
-																		src={filter.icon}
-																		class="size-3.5 {filter.icon.includes('svg')
-																			? 'dark:invert-[80%]'
-																			: ''}"
-																		style="fill: currentColor;"
-																		alt={filter.name}
-																	/>
-																</div>
-															{:else}
-																<Sparkles className="size-4" strokeWidth="1.75" />
-															{/if}
-															<span
-																class="hidden @xl:block whitespace-nowrap overflow-hidden text-ellipsis leading-none pr-0.5"
-																>{filter?.name}</span
-															>
-														</button>
-													</Tooltip>
-												{/each}
+												
 
 												{#if showWebSearchButton}
 													<Tooltip content={$i18n.t('Search the internet')} placement="top">
