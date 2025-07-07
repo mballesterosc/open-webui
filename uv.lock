@@ -2665,6 +2665,7 @@ dependencies = [
     { name = "opencv-python-headless" },
     { name = "openpyxl" },
     { name = "opensearch-py" },
+    { name = "oracledb" },
     { name = "pandas" },
     { name = "passlib", extra = ["bcrypt"] },
     { name = "peewee" },
