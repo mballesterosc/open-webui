@@ -85,6 +85,7 @@ from open_webui.routers import (
     tools,
     users,
     utils,
+    scim,
 )
 
 from open_webui.routers.retrieval import (
@@ -118,6 +119,9 @@ from open_webui.config import (
     ENABLE_DIRECT_CONNECTIONS,
     # Model list
     ENABLE_BASE_MODELS_CACHE,
+    # SCIM
+    SCIM_ENABLED,
+    SCIM_TOKEN,
     # Thread pool size for FastAPI/AnyIO
     THREAD_POOL_SIZE,
     # Tool Server Configs
@@ -672,6 +676,15 @@ app.state.TOOL_SERVERS = []
 ########################################
 
 app.state.config.ENABLE_DIRECT_CONNECTIONS = ENABLE_DIRECT_CONNECTIONS
+
+########################################
+#
+# SCIM
+#
+########################################
+
+app.state.config.SCIM_ENABLED = SCIM_ENABLED
+app.state.config.SCIM_TOKEN = SCIM_TOKEN
 
 ########################################
 #
@@ -1247,6 +1260,9 @@ app.include_router(
     evaluations.router, prefix="/api/v1/evaluations", tags=["evaluations"]
 )
 app.include_router(utils.router, prefix="/api/v1/utils", tags=["utils"])
+
+# SCIM 2.0 API for identity management
+app.include_router(scim.router, prefix="/api/v1/scim/v2", tags=["scim"])
 
 
 try:
