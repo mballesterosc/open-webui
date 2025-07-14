@@ -1124,7 +1124,10 @@
 											</div>
 										</div>
 										<div class="flex mt-0.5 space-x-2">
-                                                             				<div class=" flex-1">
+                                                             				<div class=" text-left text-xs font-small">
+												{$i18n.t('lexical')}
+											</div>
+											<div class=" flex-1">
                                                              					<input
                                                              						id="steps-range"
                                                              						type="range"
@@ -1135,6 +1138,9 @@
                                                              						class="w-full h-2 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
                                                              					/>
                                                              				</div>
+                                                             				<div class=" text-right text-xs font-small">
+												{$i18n.t('semantic')}
+											</div>
                                                              				<div>
                                                              					<input
                                                              						bind:value={RAGConfig.HYBRID_BM25_WEIGHT}
