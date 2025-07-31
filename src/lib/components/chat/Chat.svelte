@@ -2066,6 +2066,25 @@
 			}
 		}
 	};
+
+	const MAX_DRAFT_LENGTH = 5000;
+	let saveDraftTimeout = null;
+	const saveDraft = async (draft, chatId = null) => {
+		if (saveDraftTimeout) {
+			clearTimeout(saveDraftTimeout);
+		}
+
+		if (draft.prompt !== null && draft.prompt.length < MAX_DRAFT_LENGTH) {
+			saveDraftTimeout = setTimeout(async () => {
+				await sessionStorage.setItem(
+					`chat-input${chatId ? `-${chatId}` : ''}`,
+					JSON.stringify(draft)
+				);
+			}, 500);
+		} else {
+			sessionStorage.removeItem(`chat-input${chatId ? `-${chatId}` : ''}`);
+		}
+	};
 </script>
 
 <svelte:head>
@@ -2238,16 +2257,9 @@
 										false}
 									{stopResponse}
 									{createMessagePair}
-									onChange={(input) => {
+									onChange={(data) => {
 										if (!$temporaryChatEnabled) {
-											if (input.prompt !== null) {
-												sessionStorage.setItem(
-													`chat-input${$chatId ? `-${$chatId}` : ''}`,
-													JSON.stringify(input)
-												);
-											} else {
-												sessionStorage.removeItem(`chat-input${$chatId ? `-${$chatId}` : ''}`);
-											}
+											saveDraft(data, $chatId);
 										}
 									}}
 									on:upload={async (e) => {
@@ -2302,6 +2314,11 @@
 									{stopResponse}
 									{createMessagePair}
 									{onSelect}
+									onChange={(data) => {
+										if (!$temporaryChatEnabled) {
+											saveDraft(data);
+										}
+									}}
 									on:upload={async (e) => {
 										const { type, data } = e.detail;
 
