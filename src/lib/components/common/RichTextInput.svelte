@@ -211,7 +211,6 @@
 		});
 	};
 
-	export let getWordAtDocPosCallback = (func) => {};
 	export let onSelectionUpdate = (e) => {};
 
 	export let id = '';
@@ -1252,8 +1251,6 @@
 		if (messageInput) {
 			selectTemplate();
 		}
-
-		getWordAtDocPosCallback(getWordAtDocPos);
 	});
 
 	onDestroy(() => {
