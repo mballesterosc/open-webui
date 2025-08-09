@@ -2113,6 +2113,7 @@
 
 	const MAX_DRAFT_LENGTH = 5000;
 	let saveDraftTimeout = null;
+
 	const saveDraft = async (draft, chatId = null) => {
 		if (saveDraftTimeout) {
 			clearTimeout(saveDraftTimeout);
@@ -2128,6 +2129,13 @@
 		} else {
 			sessionStorage.removeItem(`chat-input${chatId ? `-${chatId}` : ''}`);
 		}
+	};
+
+	const clearDraft = async (chatId = null) => {
+		if (saveDraftTimeout) {
+			clearTimeout(saveDraftTimeout);
+		}
+		await sessionStorage.removeItem(`chat-input${chatId ? `-${chatId}` : ''}`);
 	};
 </script>
 
@@ -2317,6 +2325,7 @@
 										}
 									}}
 									on:submit={async (e) => {
+										clearDraft();
 										if (e.detail || files.length > 0) {
 											await tick();
 											submitPrompt(
@@ -2369,6 +2378,7 @@
 										}
 									}}
 									on:submit={async (e) => {
+										clearDraft();
 										if (e.detail || files.length > 0) {
 											await tick();
 											submitPrompt(
