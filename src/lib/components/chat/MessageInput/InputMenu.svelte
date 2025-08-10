@@ -18,7 +18,32 @@
 	import PhotoSolid from '$lib/components/icons/PhotoSolid.svelte';
 	import CommandLineSolid from '$lib/components/icons/CommandLineSolid.svelte';
 
-	const i18n = getContext('i18n');
+	import type { Writable } from 'svelte/store';
+	interface Tool {
+		id: string;
+		name: string;
+		meta: {
+			description: string;
+		};
+	}
+
+	interface ToolState {
+		name: string;
+		description: string;
+		enabled: boolean;
+	}
+
+	let filteredTools: Tool[] = [];
+
+	$: {
+		const term = searchTerm.toLowerCase();
+		filteredTools = ($_tools ?? []).filter((tool: Tool) => {
+			const nameMatch = tool?.name?.toLowerCase().includes(term);
+			const descMatch = tool?.meta?.description?.toLowerCase().includes(term);
+			return nameMatch || descMatch;
+		});
+	}
+	const i18n = getContext('i18n') as Writable<any>;
 
 	export let selectedToolIds: string[] = [];
 
@@ -34,7 +59,8 @@
 
 	export let onClose: Function;
 
-	let tools = {};
+	let searchTerm = '';
+	let tools: Record<string, ToolState> = {};
 	let show = false;
 	let showAllTools = false;
 
@@ -52,7 +78,7 @@
 			await _tools.set(await getTools(localStorage.token));
 		}
 
-		tools = $_tools.reduce((a, tool, i, arr) => {
+		tools = ($_tools ?? []).reduce((a: Record<string, ToolState>, tool: Tool) => {
 			a[tool.id] = {
 				name: tool.name,
 				description: tool.meta.description,
@@ -108,17 +134,25 @@
 			transition={flyAndScale}
 		>
 			{#if Object.keys(tools).length > 0}
+				<div class="px-2 py-1">
+					<input
+						type="text"
+						bind:value={searchTerm}
+						placeholder={$i18n.t('Search')}
+						class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent"
+					/>
+				</div>
 				<div class="{showAllTools ? '' : 'max-h-28'} overflow-y-auto scrollbar-thin">
-					{#each Object.keys(tools) as toolId}
+					{#each filteredTools as tool (tool.id)}
 						<button
-							class="flex w-full justify-between gap-2 items-center px-3 py-2 text-sm font-medium cursor-pointer rounded-xl"
+							class="flex w-full justify-between gap-2 items-center px-3 py-2 text-sm font-medium cursor-pointer rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800"
 							on:click={() => {
-								tools[toolId].enabled = !tools[toolId].enabled;
+								tools[tool.id].enabled = !tools[tool.id].enabled;
 							}}
 						>
 							<div class="flex-1 truncate">
 								<Tooltip
-									content={tools[toolId]?.description ?? ''}
+									content={tools[tool.id]?.description ?? ''}
 									placement="top-start"
 									className="flex flex-1 gap-2 items-center"
 								>
@@ -126,20 +160,20 @@
 										<WrenchSolid />
 									</div>
 
-									<div class=" truncate">{tools[toolId].name}</div>
+									<div class=" truncate">{tools[tool.id].name}</div>
 								</Tooltip>
 							</div>
 
 							<div class=" shrink-0">
 								<Switch
-									state={tools[toolId].enabled}
+									state={tools[tool.id].enabled}
 									on:change={async (e) => {
 										const state = e.detail;
 										await tick();
 										if (state) {
-											selectedToolIds = [...selectedToolIds, toolId];
+											selectedToolIds = [...selectedToolIds, tool.id];
 										} else {
-											selectedToolIds = selectedToolIds.filter((id) => id !== toolId);
+											selectedToolIds = selectedToolIds.filter((id) => id !== tool.id);
 										}
 									}}
 								/>
@@ -147,7 +181,7 @@
 						</button>
 					{/each}
 				</div>
-				{#if Object.keys(tools).length > 3}
+				{#if filteredTools.length > 3}
 					<button
 						class="flex w-full justify-center items-center text-sm font-medium cursor-pointer rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800"
 						on:click={() => {

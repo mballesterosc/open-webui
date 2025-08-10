@@ -166,13 +166,13 @@
 		}}
 	>
 		<div
-			class=" m-auto rounded-2xl max-w-full w-[32rem] mx-2 bg-gray-50 dark:bg-gray-950 max-h-[100dvh] shadow-3xl"
+			class=" m-auto rounded-2xl w-fit min-w-[20rem] max-w-[90vw] sm:min-w-[24rem] sm:max-w-[80vw] lg:min-w-[32rem] lg:max-w-[70vw] xl:max-w-[60rem] mx-2 bg-gray-50 dark:bg-gray-950 max-h-[85vh] shadow-3xl"
 			in:flyAndScale
 			on:mousedown={(e) => {
 				e.stopPropagation();
 			}}
 		>
-			<div class="px-[1.75rem] py-6 flex flex-col">
+			<div class="px-[1.75rem] py-6 flex flex-col max-h-[85vh]">
 				<div class=" text-lg font-semibold dark:text-gray-200 mb-2.5">
 					{#if title !== ''}
 						{title}
@@ -181,7 +181,7 @@
 					{/if}
 				</div>
 
-				<div class=" text-sm text-gray-500 dark:text-gray-400 flex-1 mb-4">
+				<div class=" text-sm text-gray-500 dark:text-gray-400 flex-1 overflow-y-auto mb-4 pr-2">
 					{#if htmlContent !== ''}
 						<div bind:this={contentElement} class="form-content">
 							{@html DOMPurify.sanitize(htmlContent)}
@@ -191,7 +191,7 @@
 					{/if}
 				</div>
 
-				<div class="mt-6 flex justify-between gap-1.5">
+				<div class="mt-auto pt-4 flex justify-between gap-1.5 border-t border-gray-200 dark:border-gray-700">
 					<button
 						class="bg-gray-100 hover:bg-gray-200 text-gray-800 dark:bg-gray-850 dark:hover:bg-gray-800 dark:text-white font-medium w-full py-2.5 rounded-lg transition"
 						on:click={() => {
@@ -236,6 +236,27 @@
 	/* Form styling for better user experience */
 	:global(.form-content) {
 		line-height: 1.5;
+		/* Add scroll styling */
+		scrollbar-width: thin;
+		scrollbar-color: #d1d5db transparent;
+	}
+
+	:global(.form-content::-webkit-scrollbar) {
+		width: 6px;
+	}
+
+	:global(.form-content::-webkit-scrollbar-track) {
+		background: transparent;
+	}
+
+	:global(.form-content::-webkit-scrollbar-thumb) {
+		background-color: #d1d5db;
+		border-radius: 3px;
+	}
+
+	/* Dark mode scrollbar */
+	:global(.dark .form-content::-webkit-scrollbar-thumb) {
+		background-color: #4b5563;
 	}
 
 	:global(.form-content form) {

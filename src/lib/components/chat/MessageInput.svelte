@@ -69,6 +69,7 @@
 	import Wrench from '../icons/Wrench.svelte';
 	import CommandLine from '../icons/CommandLine.svelte';
 	import Sparkles from '../icons/Sparkles.svelte';
+	import Switch from '../common/Switch.svelte';
 
 	import { KokoroWorker } from '$lib/workers/KokoroWorker';
 	import InputVariablesModal from './MessageInput/InputVariablesModal.svelte';
@@ -102,6 +103,7 @@
 	export let imageGenerationEnabled = false;
 	export let webSearchEnabled = false;
 	export let codeInterpreterEnabled = false;
+	let showFiltersDropdown = false;
 
 	let showInputVariablesModal = false;
 	let inputVariables = {};
@@ -428,7 +430,14 @@
 	let toggleFilters = [];
 	$: toggleFilters = (atSelectedModel?.id ? [atSelectedModel.id] : selectedModels)
 		.map((id) => ($models.find((model) => model.id === id) || {})?.filters ?? [])
-		.reduce((acc, filters) => acc.filter((f1) => filters.some((f2) => f2.id === f1.id)));
+		.reduce((acc, filters) => acc.filter((f1) => filters.some((f2) => f1.id === f2.id)));
+
+	let filterSearchTerm = '';
+
+	$: filteredToggleFilters = toggleFilters.filter(filter => 
+		filter.name.toLowerCase().includes(filterSearchTerm.toLowerCase()) ||
+		(filter.description && filter.description.toLowerCase().includes(filterSearchTerm.toLowerCase()))
+	);
 
 	let showToolsButton = false;
 	$: showToolsButton = toolServers.length + selectedToolIds.length > 0;
@@ -722,7 +731,7 @@
 						: file
 				);
 			} else {
-				uploadFileHandler(file);
+					uploadFileHandler(file);
 			}
 		});
 	};
@@ -1096,7 +1105,7 @@
 								<div class="px-2.5">
 									{#if $settings?.richTextInput ?? true}
 										<div
-											class="scrollbar-hidden rtl:text-right ltr:text-left bg-transparent dark:text-gray-100 outline-hidden w-full pt-2.5 pb-[5px] px-1 resize-none h-fit max-h-80 overflow-auto"
+											class="scrollbar-hidden rtl:text-right ltr:text-left bg-transparent dark:text-gray-100 outline-hidden w-full pt-2.5 pb-[5px] px-1 resize-none h-fit max-h-100 overflow-auto"
 											id="chat-input-container"
 										>
 											{#key $settings?.showFormattingToolbar ?? false}
@@ -1664,13 +1673,10 @@
                                         
                                                 {#if toggleFilters && toggleFilters.length > 0}
                                                     <div class="relative self-center">
-                                                    <Tooltip content="Más herramientas" placement="top">
+                                                    <Tooltip content="Agentes" placement="top">
                                                         <button
                                                         on:click|preventDefault={() => {
-                                                            const dropdown = document.getElementById('filters-dropdown');
-                                                            if (dropdown) {
-                                                            dropdown.classList.toggle('hidden');
-                                                            }
+                                                            showFiltersDropdown = !showFiltersDropdown;
                                                             // Opcional: Cerrar ToolsModal si está abierto
                                                             showTools = false;
                                                         }}
@@ -1679,7 +1685,7 @@
                                                         aria-label="Functions"
                                                         >
                                                         <Sparkles className="size-4" strokeWidth="1.75" />
-                                                        <span class="capitalize flex-1 whitespace-nowrap overflow-hidden text-ellipsis">Más herramientas</span> 
+                                                        <span class="capitalize flex-1 whitespace-nowrap overflow-hidden text-ellipsis">Agentes</span> 
                                                         {#if selectedFilterIds.length > 0}
                                                             <span class="text-xs bg-sky-100 text-sky-800 dark:bg-sky-200/5 dark:text-sky-300 rounded-full px-1.5">
                                                             {selectedFilterIds.length}
@@ -1692,49 +1698,75 @@
                                                    
                                                     <div
                                                         use:outsideClick={() => {
-                                                        const dropdown = document.getElementById('filters-dropdown');
-                                                        if (dropdown && !dropdown.classList.contains('hidden')) {
-                                                            dropdown.classList.add('hidden');
-                                                        }
+                                                        showFiltersDropdown = false;
                                                         }}
                                                         id="filters-dropdown"
-                                                        class="absolute bottom-full left-0 z-50 hidden max-h-40 overflow-y-auto overflow-x-hidden w-56 flex flex-col gap-1 rounded-lg border border-gray-200 bg-white p-1.5 shadow-lg dark:border-gray-700 dark:bg-gray-900"
+                                                        class="absolute bottom-full left-0 z-50 {showFiltersDropdown ? '' : 'hidden'} max-h-60 overflow-y-auto overflow-x-hidden w-56 flex flex-col gap-1 rounded-lg border border-gray-200 bg-white p-1.5 shadow-lg dark:border-gray-700 dark:bg-gray-900"
                                                     >
-                                                        {#each toggleFilters as filter (filter.id)}
-                                                        <Tooltip content={filter?.description} placement="right"> 
-                                                            <div class="w-full">
-                                                            <button
-                                                            on:click|preventDefault={() => {
-                                                                const active = selectedFilterIds.includes(filter.id);
-                                                                if (active) {
-                                                                    selectedFilterIds = selectedFilterIds.filter((id) => id !== filter.id);
-                                                                } else {
-                                                                    selectedFilterIds = [...selectedFilterIds, filter.id];
-                                                                }
-                                                            }}
-                                                            class="px-2 @xl:px-2.5 py-2 flex gap-1.5 items-center text-sm rounded-full transition-colors duration-300 focus:outline-hidden max-w-full overflow-hidden hover:bg-gray-50 dark:hover:bg-gray-800 {selectedFilterIds.includes(
-																filter.id
-															)
-																? 'text-sky-500 dark:text-sky-300 bg-sky-50 dark:bg-sky-200/5'
-																: 'bg-transparent text-gray-600 dark:text-gray-300  '} capitalize"
-                                                        >
-                                                            {#if filter?.icon}
-                                                                <div class="size-4 flex items-center justify-center shrink-0"> 
-                                                                    <img
-                                                                        src={filter.icon}
-                                                                        class="size-3.5 {filter.icon.includes('svg') ? 'dark:invert-[80%]' : ''}"
-                                                                        style="fill: currentColor;"
-                                                                        alt={filter.name}
+                                                        <div class="relative w-full mb-2">
+                                                            <input
+                                                                type="text"
+                                                                placeholder={$i18n.t('Search')}
+                                                                class="w-full px-3 py-2 text-sm rounded-md border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-sky-500"
+                                                                bind:value={filterSearchTerm}
+                                                            />
+                                                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                                                <svg
+                                                                    xmlns="http://www.w3.org/2000/svg"
+                                                                    viewBox="0 0 20 20"
+                                                                    fill="currentColor"
+                                                                    class="size-5 text-gray-400"
+                                                                >
+                                                                    <path
+                                                                        fill-rule="evenodd"
+                                                                        d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z"
+                                                                        clip-rule="evenodd"
                                                                     />
-                                                                </div>
-                                                            {:else}
-                                                                <Sparkles className="size-4 shrink-0" strokeWidth="1.75" /> 
-                                                            {/if}
-                                                            <span class="capitalize flex-1 whitespace-nowrap overflow-hidden text-ellipsis">{filter.name}</span> 
-                                                           
-                                                        </button>
+                                                                </svg>
                                                             </div>
-                                                        </Tooltip>
+                                                        </div>
+                                                        {#each filteredToggleFilters as filter (filter.id)}
+                                                        
+                                                        <div
+                                                            class="px-2 @xl:px-2.5 py-2 flex w-full justify-between gap-2 items-center text-sm rounded-full transition-colors duration-300 focus:outline-hidden max-w-full overflow-hidden hover:bg-gray-50 dark:hover:bg-gray-800 {selectedFilterIds.includes(
+                                                                filter.id
+                                                                )
+                                                                    ? 'text-sky-500 dark:text-sky-300 bg-sky-50 dark:bg-sky-200/5'
+                                                                    : 'bg-transparent text-gray-600 dark:text-gray-300  '} capitalize cursor-pointer"
+                                                              on:click|preventDefault={() => {
+                                                                  const active = selectedFilterIds.includes(filter.id);
+                                                                  if (active) {
+                                                                      selectedFilterIds = selectedFilterIds.filter((id) => id !== filter.id);
+                                                                  } else {
+                                                                      selectedFilterIds = [...selectedFilterIds, filter.id];
+                                                                  }
+                                                              }}
+                                                        >
+                                                            <div class="flex-1 truncate">
+                                                                <Tooltip content={filter?.description} placement="right">
+                                                                    <div class="flex gap-1.5 items-center">
+                                                                        {#if filter?.icon}
+                                                                            <div class="size-4 flex items-center justify-center shrink-0"> 
+                                                                                <img
+                                                                                    src={filter.icon}
+                                                                                    class="size-3.5 {filter.icon.includes('svg') ? 'dark:invert-[80%]' : ''}"
+                                                                                    style="fill: currentColor;"
+                                                                                    alt={filter.name}
+                                                                                />
+                                                                            </div>
+                                                                        {:else}
+                                                                            <Sparkles className="size-4 shrink-0" strokeWidth="1.75" /> 
+                                                                        {/if}
+                                                                        <span class="capitalize whitespace-nowrap overflow-hidden text-ellipsis">{filter.name}</span>
+                                                                    </div>
+                                                                </Tooltip>
+                                                            </div>
+                                                            <div class="shrink-0">
+                                                                <Switch
+                                                                    state={selectedFilterIds.includes(filter.id)}
+                                                                />
+                                                            </div>
+                                                        </div>
                                                         {/each}
                                                     </div>
                                                     </div>
@@ -1940,7 +1972,6 @@
 																	audio: true
 																});
 																// If the user grants the permission, proceed to show the call overlay
-
 																if (stream) {
 																	const tracks = stream.getTracks();
 																	tracks.forEach((track) => track.stop());
