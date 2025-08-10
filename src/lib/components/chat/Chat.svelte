@@ -84,6 +84,8 @@
 	import Navbar from '$lib/components/chat/Navbar.svelte';
 	import ChatControls from './ChatControls.svelte';
 	import EventConfirmDialog from '../common/ConfirmDialog.svelte';
+    import MultiOptionConfirmDialog from '../common/MultiOptionConfirmDialog.svelte';
+    import HtmlContentConfirmDialog from '../common/HtmlContentConfirmDialog.svelte';
 	import Placeholder from './Placeholder.svelte';
 	import NotificationToast from '../NotificationToast.svelte';
 	import Spinner from '../common/Spinner.svelte';
@@ -112,6 +114,17 @@
 	let eventConfirmationInputPlaceholder = '';
 	let eventConfirmationInputValue = '';
 	let eventCallback = null;
+
+    let showMultiOptionConfirmation = false;
+    let multiOptionConfirmationTitle = '';
+    let multiOptionConfirmationMessage = '';
+    let multiOptionConfirmationOptions = [];
+    let multiOptionCallback = null;
+    let showHtmlContentConfirmation = false;
+    let htmlContentConfirmationTitle = '';
+    let htmlContentConfirmationMessage = '';
+    let htmlContentConfirmationHtmlContent = '';
+    let htmlContentCallback = null;
 
 	let chatIdUnsubscriber: Unsubscriber | undefined;
 
@@ -404,7 +417,22 @@
 					eventConfirmationMessage = data.message;
 					eventConfirmationInputPlaceholder = data.placeholder;
 					eventConfirmationInputValue = data?.value ?? '';
-				} else {
+				}
+                else if (type === 'multi-option-confirmation') {
+					multiOptionCallback = cb;                
+					multiOptionConfirmationTitle = data.title;
+					multiOptionConfirmationMessage = data.message;
+					multiOptionConfirmationOptions = data.options;
+					showMultiOptionConfirmation = true; 
+                }
+                else if (type === 'html-content-confirmation') {
+					htmlContentCallback = cb;
+					htmlContentConfirmationTitle = data.title;
+					htmlContentConfirmationMessage = data.message;
+                    htmlContentConfirmationHtmlContent = data.html_content;
+					showHtmlContentConfirmation = true;
+                }
+                else {
 					console.log('Unknown message type', data);
 				}
 
@@ -2069,6 +2097,43 @@
 	}}
 />
 
+<MultiOptionConfirmDialog
+	bind:show={showMultiOptionConfirmation}
+	title={multiOptionConfirmationTitle}
+	message={multiOptionConfirmationMessage}
+	options={multiOptionConfirmationOptions}
+	on:confirm={(e) => {
+		if (multiOptionCallback) {
+			multiOptionCallback(e.detail);
+		}
+		showMultiOptionConfirmation = false;
+	}}
+	on:cancel={() => {
+		if (multiOptionCallback) {
+			multiOptionCallback(false);
+		}
+		showMultiOptionConfirmation = false;
+	}}
+/>
+
+<HtmlContentConfirmDialog
+	bind:show={showHtmlContentConfirmation}
+	title={htmlContentConfirmationTitle}
+	message={htmlContentConfirmationMessage}
+    htmlContent={htmlContentConfirmationHtmlContent}
+	on:confirm={(e) => {
+		if (htmlContentCallback) {
+			htmlContentCallback(e.detail);
+		}
+		showHtmlContentConfirmation = false;
+	}}
+	on:cancel={() => {
+		if (htmlContentCallback) {
+			htmlContentCallback(false);
+		}
+		showHtmlContentConfirmation = false;
+	}}
+/>
 <div
 	class="h-screen max-h-[100dvh] transition-width duration-200 ease-in-out {$showSidebar
 		? '  md:max-w-[calc(100%-260px)]'

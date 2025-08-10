@@ -1649,7 +1649,7 @@
                                         
                                                 {#if toggleFilters && toggleFilters.length > 0}
                                                     <div class="relative self-center">
-                                                    <Tooltip content={$i18n.t('Functions')} placement="top">
+                                                    <Tooltip content="Más herramientas" placement="top">
                                                         <button
                                                         on:click|preventDefault={() => {
                                                             const dropdown = document.getElementById('filters-dropdown');
@@ -1664,11 +1664,13 @@
                                                         aria-label="Functions"
                                                         >
                                                         <Sparkles className="size-4" strokeWidth="1.75" />
+                                                        <span class="capitalize flex-1 whitespace-nowrap overflow-hidden text-ellipsis">Más herramientas</span> 
                                                         {#if selectedFilterIds.length > 0}
                                                             <span class="text-xs bg-sky-100 text-sky-800 dark:bg-sky-200/5 dark:text-sky-300 rounded-full px-1.5">
                                                             {selectedFilterIds.length}
                                                             </span>
                                                         {/if}
+                                                        
                                                         </button>
                                                     </Tooltip>
 
