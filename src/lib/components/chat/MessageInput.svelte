@@ -1687,7 +1687,7 @@
                                                         <Sparkles className="size-4" strokeWidth="1.75" />
                                                         <span class="capitalize flex-1 whitespace-nowrap overflow-hidden text-ellipsis">Agentes</span> 
                                                         {#if selectedFilterIds.length > 0}
-                                                            <span class="text-xs bg-sky-100 text-sky-800 dark:bg-sky-200/5 dark:text-sky-300 rounded-full px-1.5">
+                                                            <span class="text-xs bg-covap-100 text-covap-800 dark:bg-covap-200/5 dark:text-covap-300 rounded-full px-1.5">
                                                             {selectedFilterIds.length}
                                                             </span>
                                                         {/if}
@@ -1731,7 +1731,7 @@
                                                             class="px-2 @xl:px-2.5 py-2 flex w-full justify-between gap-2 items-center text-sm rounded-full transition-colors duration-300 focus:outline-hidden max-w-full overflow-hidden hover:bg-gray-50 dark:hover:bg-gray-800 {selectedFilterIds.includes(
                                                                 filter.id
                                                                 )
-                                                                    ? 'text-sky-500 dark:text-sky-300 bg-sky-50 dark:bg-sky-200/5'
+                                                                    ? 'text-covap-500 dark:text-covap-300 bg-covap-50 dark:bg-covap-200/5'
                                                                     : 'bg-transparent text-gray-600 dark:text-gray-300  '} capitalize cursor-pointer"
                                                               on:click|preventDefault={() => {
                                                                   const active = selectedFilterIds.includes(filter.id);
@@ -1810,7 +1810,7 @@
 															type="button"
 															class="px-2 @xl:px-2.5 py-2 flex gap-1.5 items-center text-sm rounded-full transition-colors duration-300 focus:outline-hidden max-w-full overflow-hidden hover:bg-gray-50 dark:hover:bg-gray-800 {webSearchEnabled ||
 															($settings?.webSearch ?? false) === 'always'
-																? ' text-sky-500 dark:text-sky-300 bg-sky-50 dark:bg-sky-200/5'
+																? ' text-covap-500 dark:text-covap-300 bg-covap-50 dark:bg-covap-200/5'
 																: 'bg-transparent text-gray-600 dark:text-gray-300 '}"
 														>
 															<GlobeAlt className="size-4" strokeWidth="1.75" />
@@ -1829,7 +1829,7 @@
 																(imageGenerationEnabled = !imageGenerationEnabled)}
 															type="button"
 															class="px-2 @xl:px-2.5 py-2 flex gap-1.5 items-center text-sm rounded-full transition-colors duration-300 focus:outline-hidden max-w-full overflow-hidden hover:bg-gray-50 dark:hover:bg-gray-800 {imageGenerationEnabled
-																? ' text-sky-500 dark:text-sky-300 bg-sky-50 dark:bg-sky-200/5'
+																? ' text-covap-500 dark:text-covap-300 bg-covap-50 dark:bg-covap-200/5'
 																: 'bg-transparent text-gray-600 dark:text-gray-300 '}"
 														>
 															<Photo className="size-4" strokeWidth="1.75" />
@@ -1852,7 +1852,7 @@
 																(codeInterpreterEnabled = !codeInterpreterEnabled)}
 															type="button"
 															class="px-2 @xl:px-2.5 py-2 flex gap-1.5 items-center text-sm transition-colors duration-300 max-w-full overflow-hidden hover:bg-gray-50 dark:hover:bg-gray-800 {codeInterpreterEnabled
-																? ' text-sky-500 dark:text-sky-300 bg-sky-50 dark:bg-sky-200/5'
+																? ' text-covap-500 dark:text-covap-300 bg-covap-50 dark:bg-covap-200/5'
 																: 'bg-transparent text-gray-600 dark:text-gray-300 '} {($settings?.highContrastMode ??
 															false)
 																? 'm-1'
@@ -1950,7 +1950,7 @@
 												<!-- {$i18n.t('Call')} -->
 												<Tooltip content={$i18n.t('Voice mode')}>
 													<button
-														class=" bg-black text-white hover:bg-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-100 transition rounded-full p-1.5 self-center"
+														class=" bg-covap-500 text-white hover:bg-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-100 transition rounded-full p-1.5 self-center"
 														type="button"
 														on:click={async () => {
 															if (selectedModels.length > 1) {
@@ -2013,7 +2013,7 @@
 													<button
 														id="send-message-button"
 														class="{!(prompt === '' && files.length === 0)
-															? 'bg-black text-white hover:bg-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-100 '
+															? 'bg-covap-500 text-white hover:bg-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-100 '
 															: 'text-white bg-gray-200 dark:text-gray-900 dark:bg-gray-700 disabled'} transition rounded-full p-1.5 self-center"
 														type="submit"
 														disabled={prompt === '' && files.length === 0}

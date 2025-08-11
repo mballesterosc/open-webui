@@ -1,0 +1,35 @@
+:root {
+  --color-covap-50: #fef2f2;
+  --color-covap-100: #fee2e2;
+  --color-covap-200: #fecaca;
+  --color-covap-200-rgb: 254, 202, 202; /* RGB for #fecaca */
+  --color-covap-300: #fca5a5;
+  --color-covap-400: #f87171;
+  --color-covap-500: #e42817; /* The requested primary red */
+  --color-covap-600: #dc2626;
+  --color-covap-700: #b91c1c;
+  --color-covap-800: #991b1b;
+  --color-covap-900: #7f1d1d;
+}
+
+.bg-covap-50 {
+  background-color: var(--color-covap-50);
+}
+.bg-covap-100 {
+  background-color: var(--color-covap-100);
+}
+.bg-covap-200\/5 {
+  background-color: rgba(var(--color-covap-200-rgb), 0.05);
+}
+.bg-covap-500 {
+  background-color: var(--color-covap-500);
+}
+.text-covap-500 {
+  color: var(--color-covap-500);
+}
+.text-covap-800 {
+  color: var(--color-covap-800);
+}
+.dark .text-covap-300 {
+  color: var(--color-covap-300);
+}
