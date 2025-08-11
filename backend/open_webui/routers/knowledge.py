@@ -4,6 +4,8 @@ from fastapi import APIRouter, Depends, HTTPException, status, Request
 import logging
 import time
 import io
+import tempfile
+import os
 
 from open_webui.models.knowledge import (
     Knowledges,
@@ -29,14 +31,118 @@ from open_webui.utils.access_control import has_access, has_permission
 
 
 from open_webui.env import SRC_LOG_LEVELS
-from open_webui.config import ENABLE_ADMIN_WORKSPACE_CONTENT_ACCESS
+from open_webui.config import (
+    ENABLE_ADMIN_WORKSPACE_CONTENT_ACCESS,
+    EXTERNAL_DOCUMENT_LOADER_URL,
+    EXTERNAL_DOCUMENT_LOADER_API_KEY,
+    DOCLING_SERVER_URL,
+    CONTENT_EXTRACTION_ENGINE,
+)
 from open_webui.models.models import Models, ModelForm
+from open_webui.retrieval.loaders.main import Loader
 
 
 log = logging.getLogger(__name__)
 log.setLevel(SRC_LOG_LEVELS["MODELS"])
 
 router = APIRouter()
+
+
+def extract_text_with_loader(file_content: bytes, filename: str, mime_type: str) -> str:
+    """
+    Extract text content from file bytes using the loader system.
+    
+    Args:
+        file_content: Raw file content as bytes
+        filename: Original filename
+        mime_type: MIME type of the file
+        
+    Returns:
+        Extracted text content as string
+        
+    Raises:
+        Exception: If text extraction fails with both primary and fallback engines
+    """
+    # Create a temporary file to store the content
+    with tempfile.NamedTemporaryFile(delete=False, suffix=f"_{filename}") as temp_file:
+        temp_file.write(file_content)
+        temp_file_path = temp_file.name
+    
+    try:
+        # Determine loader engine based on configuration
+        engine = ""
+        loader_kwargs = {}
+        engine = CONTENT_EXTRACTION_ENGINE.value
+        # Use external document loader if configured
+        if (engine == "external" and EXTERNAL_DOCUMENT_LOADER_URL and EXTERNAL_DOCUMENT_LOADER_API_KEY and 
+            EXTERNAL_DOCUMENT_LOADER_URL.value and EXTERNAL_DOCUMENT_LOADER_API_KEY.value):
+            engine = "external"
+            loader_kwargs = {
+                "EXTERNAL_DOCUMENT_LOADER_URL": EXTERNAL_DOCUMENT_LOADER_URL.value,
+                "EXTERNAL_DOCUMENT_LOADER_API_KEY": EXTERNAL_DOCUMENT_LOADER_API_KEY.value,
+            }
+        elif engine == "docling" and DOCLING_SERVER_URL and DOCLING_SERVER_URL.value:
+            engine = "docling"
+            loader_kwargs = {
+                "DOCLING_SERVER_URL": DOCLING_SERVER_URL.value,                
+            }
+        
+        # Try with the configured engine first
+        try:
+            # Initialize loader
+            loader = Loader(engine=engine, **loader_kwargs)
+            
+            # Load and extract text content
+            documents = loader.load(str(filename), str(mime_type), temp_file_path)
+            
+            if not documents:
+                raise Exception(f"No content extracted from file {filename} using {engine or 'default'} engine")
+            
+            # Combine all document pages into a single text
+            text_content = "\n\n".join([doc.page_content for doc in documents])
+            
+            return text_content.strip()
+            
+        except Exception as primary_error:
+            log.warning(f"Error extracting text from {filename} using {engine or 'default'} engine: {primary_error}")
+            
+            # If the primary engine was external or docling, try with default engine as fallback
+            if engine in ["external", "docling"]:
+                log.info(f"Attempting fallback to default engine for file {filename}")
+                try:
+                    # Initialize loader with default engine (empty string)
+                    fallback_loader = Loader(engine="", **{})
+                    
+                    # Load and extract text content with default engine
+                    documents = fallback_loader.load(str(filename), str(mime_type), temp_file_path)
+                    
+                    if not documents:
+                        raise Exception(f"No content extracted from file {filename} using default engine")
+                    
+                    # Combine all document pages into a single text
+                    text_content = "\n\n".join([doc.page_content for doc in documents])
+                    
+                    log.info(f"Successfully extracted text from {filename} using default fallback engine")
+                    return text_content.strip()
+                    
+                except Exception as fallback_error:
+                    log.error(f"Error extracting text from {filename} using default fallback engine: {fallback_error}")
+                    raise Exception(f"Failed to extract text from {filename}. Primary engine ({engine}) failed: {str(primary_error)}. Fallback engine failed: {str(fallback_error)}")
+            else:
+                # If already using default engine or unknown engine, re-raise the original error
+                raise Exception(f"Failed to extract text from {filename} using {engine or 'default'} engine: {str(primary_error)}")
+        
+    except Exception as e:
+        log.error(f"Error extracting text from {filename}: {e}")
+        raise Exception(f"Failed to extract text from {filename}: {str(e)}")
+        
+    finally:
+        # Clean up temporary file
+        try:
+            os.unlink(temp_file_path)
+        except Exception as cleanup_error:
+            log.warning(f"Failed to clean up temporary file {temp_file_path}: {cleanup_error}")
+
 
 ############################
 # getKnowledgeBases
@@ -642,6 +748,7 @@ async def delete_knowledge_by_id(id: str, user=Depends(get_verified_user)):
     return result
 
 
+
 ############################
 # ResetKnowledgeById
 ############################
@@ -917,20 +1024,34 @@ async def sync_google_drive_folder(
                     f"Google Drive sync: Downloaded file '{filename}', size: {len(file_content)} bytes"
                 )
 
-                # Debug: Check if content is actually text
+                # Extract text content using the loader system
                 try:
-                    content_preview = (
-                        file_content.decode("utf-8")[:200]
-                        if isinstance(file_content, bytes)
-                        else str(file_content)[:200]
-                    )
                     log.info(
-                        f"Google Drive sync: File content preview: {content_preview}..."
+                        f"Google Drive sync: Extracting text content from '{filename}' using loader system"
                     )
+                    
+                    # Get MIME type from Google Drive file info
+                    mime_type = gdrive_file.get("mimeType", "application/octet-stream")
+                    
+                    # Extract text content using loader
+                    text_content = extract_text_with_loader(
+                        file_content=file_content,
+                        filename=filename,
+                        mime_type=mime_type
+                    )
+                    
+                    log.info(
+                        f"Google Drive sync: Successfully extracted {len(text_content)} characters from '{filename}'"
+                    )
+                    
                 except Exception as e:
-                    log.error(f"Google Drive sync: Could not decode file content: {e}")
+                    log.error(
+                        f"Google Drive sync: Failed to extract text from '{filename}': {e}"
+                    )
+                    # Skip this file and continue with others
+                    continue
 
-                # Create file object
+                # Create file object for storage upload
                 file_obj = io.BytesIO(file_content)
                 file_obj.name = filename
 
@@ -952,15 +1073,8 @@ async def sync_google_drive_folder(
                     f"Google Drive sync: Uploaded to storage, contents size: {len(contents)} bytes"
                 )
 
-                # Create file record with content in data field
+                # Create file record with extracted text content
                 from open_webui.models.files import FileForm
-
-                # Convert bytes to string for text content
-                text_content = (
-                    file_content.decode("utf-8")
-                    if isinstance(file_content, bytes)
-                    else str(file_content)
-                )
 
                 file_item = Files.insert_new_file(
                     user.id,
@@ -969,11 +1083,11 @@ async def sync_google_drive_folder(
                         filename=filename,
                         path=file_path,
                         data={
-                            "content": text_content,  # Store the actual text content
+                            "content": text_content,  # Store the extracted text content
                         },
                         meta={
                             "name": filename,
-                            "content_type": "text/plain",  # Changed from application/octet-stream
+                            "content_type": mime_type,  # Use original MIME type
                             "size": len(contents),
                             "google_drive_id": gdrive_file["id"],
                             "google_drive_modified": gdrive_file["modifiedTime"],
