@@ -184,7 +184,8 @@
 				<div class=" text-sm text-gray-500 dark:text-gray-400 flex-1 overflow-y-auto mb-4 pr-2">
 					{#if htmlContent !== ''}
 						<div bind:this={contentElement} class="form-content">
-							{@html DOMPurify.sanitize(htmlContent)}
+							{@html htmlContent}
+                            <!-- {@html DOMPurify.sanitize(htmlContent)} -->
 						</div>
 					{:else}
 						{$i18n.t('Please fill out the form below.')}
